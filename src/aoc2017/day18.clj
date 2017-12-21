@@ -43,7 +43,7 @@
 (defn exec-till-interrupt [instructions env]
   (loop [env env]
     (if (:int env)
-      (assoc env :int nil)
+      (dissoc env :int)
       (recur ((instructions (:pc env)) env)))))
 
 (defn get-last-send-after-receive []
@@ -65,13 +65,13 @@
            send2 clojure.lang.PersistentQueue/EMPTY
            ]
       (cond
-        (:send env1) (recur (assoc env1 :send nil)
+        (:send env1) (recur (dissoc env1 :send)
                             env2
                             send1count
                             (conj send1 (:send env1))
                             send2)
         (:send env2) (recur env1
-                            (assoc env2 :send nil)
+                            (dissoc env2 :send)
                             (inc send1count)
                             send1
                             (conj send2 (:send env2)))
