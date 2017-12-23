@@ -33,12 +33,6 @@
                    [#{} start]
                    infection-matrix))))
 
-(def ^:const state-transitions
-  {:clean    :weakened
-   :weakened :infected
-   :infected :flagged
-   :flagged  :clean})
-
 (defn advance [input burst]
   (let [infections (infection-map input)]
     (loop [step 0
@@ -48,12 +42,12 @@
            dir [0 -1]]
       (cond
         (= step burst) new-infections
-        
+
         (infections coord)
         (recur (inc step)
                (disj infections coord)
                new-infections
-               (map + coord (turn-right dir)) ; Luckily a seq matches a vec in a set/map
+               (map + coord (turn-right dir))
                (turn-right dir))
         :else
         (recur (inc step)
@@ -62,8 +56,23 @@
                (map + coord (turn-left dir))
                (turn-left dir))))))
 
+(def ^:const state-transitions
+  {:clean    :weakened
+   :weakened :infected
+   :infected :flagged
+   :flagged  :clean})
+
+(def ^:const evolved-rules
+  {:clean    turn-left
+   :weakened identity
+   :infected turn-right
+   :flagged  #(map - %)})
+
 (defn evolved-virus [input burst]
-  (let [infection-states (reduce (fn [inf coord] (assoc inf coord :infected)) {} (infection-map input))]
+  (let [infection-states
+        (reduce (fn [inf coord] (assoc inf coord :infected))
+                {}
+                (infection-map input))]
     (loop [step 0
            infection-states infection-states
            new-infections 0
@@ -71,25 +80,10 @@
            dir [0 -1]]
       (if (= step burst)
         new-infections
-        (let [step (inc step)
-              new-state (update infection-states coord state-transitions :weakened)]
-          (case (infection-states coord :clean)
-            :clean
-            (recur step new-state new-infections
-                   (map + coord (turn-left dir))
-                   (turn-left dir))
-            
-            :weakened
-            (recur step new-state (inc new-infections)
-                   (map + coord dir)
-                   dir)
-            
-            :infected
-            (recur step new-state new-infections
-                   (map + coord (turn-right dir))
-                   (turn-right dir))
-            
-            :flagged
-            (recur step new-state new-infections
-                   (map - coord dir)
-                   (map - dir))))))))
+        (let [state (infection-states coord :clean)
+              new-dir ((evolved-rules state) dir)]
+          (recur (inc step)
+                 (update infection-states coord state-transitions :weakened)
+                 (if (= state :weakened) (inc new-infections) new-infections)
+                 (map + coord new-dir) ; Luckily a seq matches a vec in a set/map
+                 new-dir))))))
