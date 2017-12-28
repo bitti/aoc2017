@@ -1,6 +1,5 @@
 (ns aoc2017.day22
-  (:require [clojure.set :as set] [clojure.string :as s]))
-(set! *unchecked-math* true)
+  (:require [clojure.set :as set]))
 
 (defn slurp-from-stdin []
   (->> *in*
@@ -67,25 +66,29 @@
   {:clean    turn-left
    :weakened identity
    :infected turn-right
-   :flagged  #(map - %)})
+   :flagged  (fn [[^long x ^long y]] [(- x) (- y)])})
+
+;; Don't know why there is no transient version of update
+(defn update!
+  [m k f x]
+  (assoc! m k (f (get m k) x)))
 
 (defn evolved-virus [input burst]
-  (let [infection-states
-        (reduce (fn [inf coord] (.put ^java.util.HashMap inf coord :infected) inf)
-                (java.util.HashMap.)
-                (infection-map input))]
+  (let [infection-states (transient
+        (reduce (fn [inf coord] (assoc inf coord :infected))
+                {}
+                (infection-map input)))]
     (loop [step 0
            infection-states infection-states
            new-infections 0
-           coord [0 0]
+           [^long x ^long y :as coord] [0 0]
            dir [0 -1]]
       (if (= step burst)
         new-infections
         (let [state (get infection-states coord :clean)
-              new-dir ((evolved-rules state) dir)]
-          (.put ^java.util.HashMap infection-states coord (state-transitions (get infection-states coord :weakened)))
+              [^long dx ^long dy :as new-dir] ((evolved-rules state) dir)]
           (recur (inc step)
-                 infection-states
+                 (update! infection-states coord state-transitions :weakened)
                  (if (= state :weakened) (inc new-infections) new-infections)
-                 (map + coord new-dir) ; Luckily a seq matches a vec in a set/map
+                 [(+ x dx) (+ y dy)]
                  new-dir))))))

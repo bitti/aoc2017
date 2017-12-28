@@ -8,6 +8,8 @@
 
 (deftest test-day22-part1
   (testing "example"
+    (is (= (with-in-str example (advance (slurp-from-stdin) 7)) 5))
+    (is (= (with-in-str example (advance (slurp-from-stdin) 70)) 41))
     (is (= (with-in-str example (advance (slurp-from-stdin) 10000)) 5587)))
   (testing "puzzle input"
     (is (= (binding [*in* (resource-as-stdin "day22-input.txt")]
