@@ -29,4 +29,3 @@ In state B:
 (slurp-from-stdin)) 3))
   (testing "puzzle input"
     (is (= (binding [*in* (resource-as-stdin "day25-input.txt")] (slurp-from-stdin)) 4230)))))
-
