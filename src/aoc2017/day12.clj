@@ -1,4 +1,5 @@
-(ns aoc2017.day12)
+(ns aoc2017.day12
+  (require [clojure.set :as set]))
 
 (defn parse-connections []
   (->> *in*
@@ -13,10 +14,10 @@
 
 (defn transitive-closure [group new-members connections]
   (let [new-members        
-        (clojure.set/difference (set (flatten (map connections new-members))) group)]
+        (set/difference (set (flatten (map connections new-members))) group)]
     (if (empty? new-members)
       group
-      (recur (clojure.set/union group new-members) new-members connections))))
+      (recur (set/union group new-members) new-members connections))))
 
 (defn count-group-size [rep]
   (count (transitive-closure #{} #{rep} (parse-connections))))
@@ -27,5 +28,5 @@
            count 0]
       (if (empty? rest)
         count
-        (recur (clojure.set/difference rest (transitive-closure #{} #{(first rest)} connections))
+        (recur (set/difference rest (transitive-closure #{} #{(first rest)} connections))
                (inc count))))))

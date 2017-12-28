@@ -1,4 +1,5 @@
-(ns aoc2017.day22 (:require [clojure.string :as s]))
+(ns aoc2017.day22
+  (:require [clojure.set :as set] [clojure.string :as s]))
 (set! *unchecked-math* true)
 
 (defn slurp-from-stdin []
@@ -14,14 +15,14 @@
    [ 0 -1] [-1  0]
    [-1  0] [ 0  1]})
 
-(def ^:const turn-right (clojure.set/map-invert turn-left))
+(def ^:const turn-right (set/map-invert turn-left))
 
 (defn infection-map [infection-matrix]
   { :pre [(= (count infection-matrix) (count (first infection-matrix)))]} ; Assuming square matrix
   (let [size (count infection-matrix)
         start (- (int (/ size 2)))]
     (first (reduce (fn [[inf row] row-nodes]
-                     [(clojure.set/union
+                     [(set/union
                        inf
                        (first (reduce (fn [[inf col] node]
                                         (if node
@@ -70,8 +71,8 @@
 
 (defn evolved-virus [input burst]
   (let [infection-states
-        (reduce (fn [inf coord] (assoc inf coord :infected))
-                {}
+        (reduce (fn [inf coord] (.put ^java.util.HashMap inf coord :infected) inf)
+                (java.util.HashMap.)
                 (infection-map input))]
     (loop [step 0
            infection-states infection-states
@@ -80,10 +81,11 @@
            dir [0 -1]]
       (if (= step burst)
         new-infections
-        (let [state (infection-states coord :clean)
+        (let [state (get infection-states coord :clean)
               new-dir ((evolved-rules state) dir)]
+          (.put ^java.util.HashMap infection-states coord (state-transitions (get infection-states coord :weakened)))
           (recur (inc step)
-                 (update infection-states coord state-transitions :weakened)
+                 infection-states
                  (if (= state :weakened) (inc new-infections) new-infections)
                  (map + coord new-dir) ; Luckily a seq matches a vec in a set/map
                  new-dir))))))

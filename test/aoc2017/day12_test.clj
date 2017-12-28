@@ -28,6 +28,3 @@
   (testing "puzzle input"
     (binding [*in* (resource-as-stdin "day12-input.txt")]
       (is (= (count-groups) 179)))))
-
-
-
