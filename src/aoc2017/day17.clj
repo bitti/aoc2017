@@ -15,8 +15,15 @@
               (vec a)
               (recur ni i (unchecked-remainder-int steps ni))))))))
 
-(defn next-value [insertions steps]
-  (get (spin insertions steps) insertions))
-
-(defn next-value-after-0 [insertions steps]
-  (get (spin insertions steps) 0))
+(defn spin-0 [insertions steps]
+  (loop [i 1                            ; Number of insertions
+         p 0                            ; Current position
+         a 0                            ; Last value after 0
+         ]
+    (if (> i insertions)
+      a
+      (if (< (+ p (* steps)) i)
+        (let [leaps (unchecked-divide-int (- (dec  i) p) steps)]
+          (recur (+ i leaps) (long (+ p leaps (* leaps steps))) a))
+        (let [new-p (unchecked-remainder-int (+ p steps) i)]
+          (recur (inc i) (inc new-p) (if (= new-p 0) i a)))))))
